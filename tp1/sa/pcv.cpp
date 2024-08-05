@@ -83,16 +83,19 @@ bool calculateAcceptanceProbability(float temperature, float currentDistance, fl
 
 // Main function
 int main(int argc, char **argv) {
-    if (argc != 2) {
+    if (argc != 6) {
         printf("Error in parameter passing\n");
         return -1;
     }
 
     ifstream inputFile(argv[1]);
 
-    int maxIterations = 250;
-    float initialTemperature = 800;
-    float coolingRate = 0.99;
+    int maxIterations = stoi(argv[2]);
+    float initialTemperature = stof(argv[3]);
+    float coolingRate = stof(argv[4]);
+    int max_without_change = 350;
+
+    FILE *exitFile = fopen(argv[5], "a+");
 
     int numCities;
     inputFile >> numCities;
@@ -146,8 +149,9 @@ int main(int argc, char **argv) {
 
     float temperature = initialTemperature;
     int iteration = 0;
+    int iter_without_change = 0;
 
-    while (temperature > 1e-10) {
+    while ((temperature > 1e-10) && (iter_without_change < max_without_change)) {
         while (iteration < maxIterations) {
             iteration++;
             Solution neighborSolution;
@@ -158,6 +162,7 @@ int main(int argc, char **argv) {
                 currentSolution = neighborSolution;
                 if (neighborSolution.distance < bestSolution.distance) {
                     bestSolution = neighborSolution;
+                    iter_without_change = 0;
                 }
             } else if (calculateAcceptanceProbability(temperature, currentSolution.distance, neighborSolution.distance)) {
                 currentSolution = neighborSolution;
@@ -166,6 +171,7 @@ int main(int argc, char **argv) {
         printf("Best Distance so far = %f\n", bestSolution.distance);
         temperature *= coolingRate;
         iteration = 0;
+        iter_without_change++;
     }
 
     startTime = clock() - startTime;
@@ -178,10 +184,13 @@ int main(int argc, char **argv) {
     }
     printf("\n");
 
+    fprintf(exitFile, "%f;%f\n", bestSolution.distance, ((float)startTime) / CLOCKS_PER_SEC);
+
     for (int i = 0; i < numCities; i++) {
         free(adjMatrix[i]);
     }
     free(adjMatrix);
+    fclose(exitFile);
 
     return 0;
 }

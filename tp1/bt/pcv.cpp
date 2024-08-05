@@ -142,6 +142,47 @@ Solution select_new_solution(Solution current_solution, Solution best_solution,
     return new_solution;
 }
 
+// Function to generate a greedy solution for TSP starting from a random city
+vector<int> generate_greedy_solution(int num_cities, float **distance_matrix) {
+    // First create an instance of an engine for random number generation.
+    std::random_device rnd_device;
+    // Specify the engine and distribution.
+    std::mt19937 mersenne_engine{rnd_device()};  // Generates random integers
+    std::uniform_int_distribution<int> dist{0, num_cities - 1};
+
+    // Start from a random city
+    int start_city = dist(mersenne_engine) + 1;
+
+    // Vector to store the solution
+    std::vector<int> solution;
+    solution.push_back(start_city);
+
+    for (int i = 1; i < num_cities; i++) {
+        int last_city = solution.back();
+        int next_city = -1;
+        float min_distance = std::numeric_limits<float>::max();
+
+        // Find the nearest unvisited city
+        for (int j = 0; j < num_cities; j++) {
+            if (std::find(solution.begin(), solution.end(), j + 1) ==
+                    solution.end() &&
+                distance_matrix[last_city - 1][j] > 0.0) {
+                if (distance_matrix[last_city - 1][j] < min_distance) {
+                    next_city = j + 1;
+                    min_distance = distance_matrix[last_city - 1][j];
+                }
+            }
+        }
+
+        // Add the nearest city to the solution
+        if (next_city != -1) {
+            solution.push_back(next_city);
+        }
+    }
+
+    return solution;
+}
+
 int main(int argc, char **argv) {
     if (argc != 2) {
         printf("Error: Incorrect number of parameters\n");
@@ -185,8 +226,11 @@ int main(int argc, char **argv) {
     clock_t t;
     t = clock();
 
+    /*vector<int> solution =
+        generate_random_solution(num_cities, distance_matrix);*/
     vector<int> solution =
-        generate_random_solution(num_cities, distance_matrix);
+        generate_greedy_solution(num_cities, distance_matrix);
+
     float distance =
         calculate_total_distance(solution, num_cities, distance_matrix);
     Solution current_solution;

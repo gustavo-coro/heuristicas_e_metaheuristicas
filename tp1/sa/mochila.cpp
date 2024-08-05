@@ -178,7 +178,7 @@ int main(int argc, char **argv) {
         penalty += items[i].weight;
     }
 
-    string initialSolutionStr;
+    string initialSolutionStr(numItems, '0');
     Solution initialSolution;
 
     startTime = clock();
@@ -197,6 +197,8 @@ int main(int argc, char **argv) {
         printf("Error in parameter passing\n");
         return -1;
     }
+
+    initialSolution = calculateProfit(initialSolutionStr, items, maxWeight);
 
     Solution bestSolution = initialSolution;
     float temperature = 1000;
