@@ -83,19 +83,17 @@ bool calculateAcceptanceProbability(float temperature, float currentDistance, fl
 
 // Main function
 int main(int argc, char **argv) {
-    if (argc != 6) {
+    if (argc != 2) {
         printf("Error in parameter passing\n");
         return -1;
     }
 
     ifstream inputFile(argv[1]);
 
-    int maxIterations = stoi(argv[2]);
-    float initialTemperature = stof(argv[3]);
-    float coolingRate = stof(argv[4]);
+    int maxIterations = 500;
+    float initialTemperature = 1000;
+    float coolingRate = 0.99;
     int max_without_change = 350;
-
-    FILE *exitFile = fopen(argv[5], "a+");
 
     int numCities;
     inputFile >> numCities;
@@ -184,13 +182,10 @@ int main(int argc, char **argv) {
     }
     printf("\n");
 
-    fprintf(exitFile, "%f;%f\n", bestSolution.distance, ((float)startTime) / CLOCKS_PER_SEC);
-
     for (int i = 0; i < numCities; i++) {
         free(adjMatrix[i]);
     }
     free(adjMatrix);
-    fclose(exitFile);
 
     return 0;
 }

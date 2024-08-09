@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+
 #include <algorithm>
 #include <fstream>
 #include <iostream>
@@ -60,19 +61,6 @@ bool isValidSolution(string solution, Item* items, int max_weight) {
 string createGreedySolutionCB(int num_items, Item* items, int max_weight) {
     string solution = createInitialSolution(num_items);
     sort(items, items + num_items, compareByCostBenefit);
-    for (int i = 0; i < num_items; i++) {
-        solution[items[i].index] = '1';
-        if (!isValidSolution(solution, items, max_weight)) {
-            solution[items[i].index] = '0';
-        }
-    }
-    return solution;
-}
-
-// Function to create a greedy solution based on weight
-string createGreedySolutionLW(int num_items, Item* items, int max_weight) {
-    string solution = createInitialSolution(num_items);
-    sort(items, items + num_items, compareByWeight);
     for (int i = 0; i < num_items; i++) {
         solution[items[i].index] = '1';
         if (!isValidSolution(solution, items, max_weight)) {
@@ -156,7 +144,7 @@ int main(int argc, char** argv) {
     srand(time(NULL));
     clock_t t;
 
-    if (argc != 3) {
+    if (argc != 2) {
         printf("Error in parameter passing\n");
         return -1;
     }
@@ -183,26 +171,16 @@ int main(int argc, char** argv) {
 
     t = clock();
 
-    if (*argv[2] == '0') {
-        initial_solution = createGreedySolutionLW(num_items, items, max_weight);
-        sol = calculateProfit(initial_solution, items, penalty, max_weight);
-        cout << "Greedy solution with less weight: " << sol.items << " - "
-             << sol.value << endl;
-    } else if (*argv[2] == '1') {
-        initial_solution = createGreedySolutionCB(num_items, items, max_weight);
-        sol = calculateProfit(initial_solution, items, penalty, max_weight);
-        cout << "Greedy solution with cost-benefit: " << sol.items << " - "
-             << sol.value << endl;
-    } else {
-        printf("Error in parameter passing\n");
-        return -1;
-    }
+    initial_solution = createGreedySolutionCB(num_items, items, max_weight);
+    sol = calculateProfit(initial_solution, items, penalty, max_weight);
+    cout << "Greedy solution with cost-benefit: " << sol.items << " - "
+         << sol.value << endl;
 
     Solution best_solution = sol;
     vector<int> tabu_list(num_items, 0);
-    int iterations = 0, best_change = 0, tabu_list_size = 2;
+    int best_change = 0, tabu_list_size = 2, max_without_change = 50;
 
-    while (best_change < 50) {
+    while (best_change < max_without_change) {
         cout << "Best: " << best_solution.items << " - " << best_solution.value
              << endl;
         sol = selectNewSolution(sol, best_solution, tabu_list, tabu_list_size,
@@ -213,7 +191,6 @@ int main(int argc, char** argv) {
         } else {
             best_change++;
         }
-        iterations++;
     }
 
     t = clock() - t;

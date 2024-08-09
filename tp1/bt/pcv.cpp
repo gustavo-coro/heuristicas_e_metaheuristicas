@@ -90,8 +90,7 @@ vector<vector<Solution>> generate_all_neighbors(int num_cities,
 // Selects a new solution based on the tabu list and current best solution
 Solution select_new_solution(Solution current_solution, Solution best_solution,
                              vector<vector<int>> &tabu_list, int tabu_size,
-                             int penalty, int num_cities,
-                             float **distance_matrix) {
+                             int num_cities, float **distance_matrix) {
     vector<vector<Solution>> neighborhood =
         generate_all_neighbors(num_cities, distance_matrix, current_solution);
     Solution new_solution;
@@ -226,8 +225,6 @@ int main(int argc, char **argv) {
     clock_t t;
     t = clock();
 
-    /*vector<int> solution =
-        generate_random_solution(num_cities, distance_matrix);*/
     vector<int> solution =
         generate_greedy_solution(num_cities, distance_matrix);
 
@@ -243,24 +240,21 @@ int main(int argc, char **argv) {
         printf("[%d] ", current_solution.cities[i]);
     }
     printf("\n");
-
-    int penalty = 50;
     Solution best_solution = current_solution;
     vector<vector<int>> tabu_list(num_cities, vector<int>(num_cities, 0));
-    int iteration = 0, best_change = 0, tabu_size = 2;
+    int best_change = 0, tabu_size = 15, max_without_change = 200;
 
-    while (best_change < 100) {
+    while (best_change < max_without_change) {
         printf("Distance = %f\n", best_solution.distance);
-        current_solution = select_new_solution(current_solution, best_solution,
-                                               tabu_list, tabu_size, penalty,
-                                               num_cities, distance_matrix);
+        current_solution =
+            select_new_solution(current_solution, best_solution, tabu_list,
+                                tabu_size, num_cities, distance_matrix);
         if (current_solution.distance < best_solution.distance) {
             best_solution = current_solution;
             best_change = 0;
         } else {
             best_change += 1;
         }
-        iteration += 1;
     }
 
     t = clock() - t;
@@ -277,6 +271,5 @@ int main(int argc, char **argv) {
         free(distance_matrix[i]);
     }
     free(distance_matrix);
-
     return 0;
 }

@@ -59,32 +59,6 @@ bool isSolutionValid(string solution, Item *items, int maxWeight) {
     return totalWeight <= maxWeight;
 }
 
-// Function to create a greedy solution based on cost-benefit ratio
-string createGreedySolutionByCostBenefit(int numItems, Item *items, int maxWeight) {
-    string solution = createInitialSolution(numItems);
-    sort(items, items + numItems, compareByCostBenefit);
-    for (int i = 0; i < numItems; i++) {
-        solution[items[i].position] = '1';
-        if (!isSolutionValid(solution, items, maxWeight)) {
-            solution[items[i].position] = '0';
-        }
-    }
-    return solution;
-}
-
-// Function to create a greedy solution based on weight
-string createGreedySolutionByWeight(int numItems, Item *items, int maxWeight) {
-    string solution = createInitialSolution(numItems);
-    sort(items, items + numItems, compareByWeight);
-    for (int i = 0; i < numItems; i++) {
-        solution[items[i].position] = '1';
-        if (!isSolutionValid(solution, items, maxWeight)) {
-            solution[items[i].position] = '0';
-        }
-    }
-    return solution;
-}
-
 // Function to calculate the profit and weight of a solution
 Solution calculateProfit(string solutionStr, Item *items, int maxWeight) {
     Solution solution;
@@ -157,7 +131,7 @@ int main(int argc, char **argv) {
     srand(time(NULL));
     clock_t startTime;
 
-    if (argc != 3) {
+    if (argc != 2) {
         printf("Error in parameter passing\n");
         return -1;
     }
@@ -165,6 +139,11 @@ int main(int argc, char **argv) {
     ifstream inputFile(argv[1]);
     int numItems, maxWeight;
     inputFile >> numItems >> maxWeight;
+
+    int maxIterations = 400;
+    float initialTemperature = 1000;
+    float coolingRate = 0.99;
+    int max_without_change = 350;
 
     Item *items = (Item *)malloc(sizeof(Item) * numItems);
     for (int i = 0; i < numItems; i++) {
@@ -183,31 +162,20 @@ int main(int argc, char **argv) {
 
     startTime = clock();
 
-    if (*argv[2] == '0') {
-        initialSolutionStr = createGreedySolutionByWeight(numItems, items, maxWeight);
-        initialSolution = calculateProfit(initialSolutionStr, items, maxWeight);
-        cout << "Greedy solution with less weight: ";
-        cout << initialSolution.items << " - " << initialSolution.value << endl;
-    } else if (*argv[2] == '1') {
-        initialSolutionStr = createGreedySolutionByCostBenefit(numItems, items, maxWeight);
-        initialSolution = calculateProfit(initialSolutionStr, items, maxWeight);
-        cout << "Greedy solution with cost-benefit: ";
-        cout << initialSolution.items << " - " << initialSolution.value << endl;
-    } else {
-        printf("Error in parameter passing\n");
-        return -1;
-    }
+    initialSolutionStr = createInitialSolution(numItems);
+    initialSolution = calculateProfit(initialSolutionStr, items, maxWeight);
+    cout << "Initial Solution: ";
+    cout << initialSolution.items << " - " << initialSolution.value << endl;
 
     initialSolution = calculateProfit(initialSolutionStr, items, maxWeight);
 
     Solution bestSolution = initialSolution;
-    float temperature = 1000;
-    float coolingRate = 0.98;
-    int terminationCriterion = 100;
+    float temperature = initialTemperature;
     int iterations = 0;
+    int iter_without_change = 0;
 
-    while (temperature > 1e-15) {
-        while (iterations < terminationCriterion) {
+    while ((temperature > 1e-10) && (iter_without_change < max_without_change)) {
+        while (iterations < maxIterations) {
             iterations++;
             Solution neighbor = generateRandomNeighbor(initialSolution, items, numItems, maxWeight);
 
@@ -216,6 +184,7 @@ int main(int argc, char **argv) {
                     initialSolution = neighbor;
                     if (neighbor.value > bestSolution.value) {
                         bestSolution = neighbor;
+                        iter_without_change = 0;
                     }
                 } else if (calculateAcceptanceProbability(temperature, initialSolution.value, neighbor.value)) {
                     initialSolution = neighbor;
@@ -225,6 +194,7 @@ int main(int argc, char **argv) {
         cout << "Current best value: " << bestSolution.value << endl;
         temperature *= coolingRate;
         iterations = 0;
+        iter_without_change++;
     }
 
     startTime = clock() - startTime;
