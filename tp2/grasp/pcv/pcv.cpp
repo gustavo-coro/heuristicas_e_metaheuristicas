@@ -63,6 +63,18 @@ void read_graph(char **argv, int *v, float ***m) {
     *m = mat;
 }
 
+float calcula_distancia(vector<int> solucao, int ver, float **mat_adg) {
+    float dist = 0.0;
+    for (int i = 0; i < ver; i++) {
+        if (i == (ver - 1)) {
+            dist += mat_adg[solucao[i]][solucao[0]];
+            continue;
+        }
+        dist += mat_adg[solucao[i]][solucao[i + 1]];
+    }
+    return dist;
+}
+
 vector<int> gera_solucao_aleatoria(int ver, float **mat_adg) {
     std::random_device rnd_device;
     std::mt19937 mersenne_engine{rnd_device()};
@@ -76,30 +88,17 @@ vector<int> gera_solucao_aleatoria(int ver, float **mat_adg) {
 
 vector<int> gera_vizinho(vector<int> solucao, int ver, int f_idx, int s_idx) {
     vector<int> vizinho = solucao;
-    int aux = vizinho[f_idx];
-    vizinho[f_idx] = vizinho[s_idx];
-    vizinho[s_idx] = aux;
+    std::swap(vizinho[f_idx], vizinho[s_idx]);
     return vizinho;
 }
 
-float calcula_distancia(vector<int> solucao, int ver, float **mat_adg) {
-    float dist = 0.0;
-    for (int i = 0; i < ver; i++) {
-        if (i == (ver - 1)) {
-            dist += mat_adg[solucao[i]][solucao[0]];
-            continue;
-        }
-        dist += mat_adg[solucao[i]][solucao[i + 1]];
-    }
-    return dist;
-}
 solution busca_local(solution sol_inicial, int ver, float **mat) {
     solution sol = sol_inicial;
-    int iter_sem_melhora = 0;
-    while (iter_sem_melhora < 25) {
+    bool improv = true;
+    while (improv) {
         solution vizinho = sol;
         for (int j = 0; j < ver; j++) {
-            for (int k = 0; k < ver; k++) {
+            for (int k = j + 1; k < ver; k++) {
                 if (k == j) {
                     continue;
                 }
@@ -110,12 +109,14 @@ solution busca_local(solution sol_inicial, int ver, float **mat) {
                 if (dist_v < vizinho.distancia) {
                     vizinho.v = v;
                     vizinho.distancia = dist_v;
-                    iter_sem_melhora = 0;
                 }
             }
         }
-        sol = vizinho;
-        iter_sem_melhora++;
+        if (vizinho.distancia < sol.distancia) {
+            sol = vizinho;
+        } else {
+            improv = false;
+        }
     }
 
     return sol;

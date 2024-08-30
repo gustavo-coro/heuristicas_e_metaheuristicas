@@ -71,58 +71,6 @@ int get_random_from_interval(int begin, int end) {
     return dist(mersenne_engine);
 }
 
-vector<int> gera_solucao_aleatoria(int ver, float **mat_adg) {
-    std::random_device rnd_device;
-    std::mt19937 mersenne_engine{rnd_device()};
-    std::uniform_int_distribution<> dist(0, ver - 1);
-
-    std::vector<int> cities(ver);
-    std::iota(std::begin(cities), std::end(cities), 0);
-    std::shuffle(std::begin(cities), std::end(cities), mersenne_engine);
-    return cities;
-}
-
-vector<int> gera_vizinho_switch_two(vector<int> solucao, int ver, int f_idx,
-                                    int s_idx) {
-    vector<int> vizinho = solucao;
-    int aux = vizinho[f_idx];
-    vizinho[f_idx] = vizinho[s_idx];
-    vizinho[s_idx] = aux;
-    return vizinho;
-}
-
-vector<int> gera_vizinho_shift_two(vector<int> solucao, int ver, int f_idx,
-                                   int s_idx) {
-    vector<int> vizinho = solucao;
-    int aux = vizinho[(f_idx + 2) % ver];
-    vizinho[(f_idx + 2) % ver] = vizinho[f_idx];
-    vizinho[f_idx] = aux;
-
-    aux = vizinho[(s_idx + 2) % ver];
-    vizinho[(s_idx + 2) % ver] = vizinho[s_idx];
-    vizinho[s_idx] = aux;
-    return vizinho;
-}
-
-vector<int> gera_vizinho_link_two(vector<int> solucao, int ver, int f_idx,
-                                  int s_idx) {
-    std::vector<int> vizinho(ver);
-    std::iota(std::begin(vizinho), std::end(vizinho), -1);
-    vizinho[0] = solucao[f_idx];
-    vizinho[1] = solucao[s_idx];
-
-    int j = 0;
-    for (int i = 2; i < ver; i++) {
-        while (j == f_idx || j == s_idx) {
-            j++;
-        }
-        vizinho[i] = solucao[j];
-        j++;
-    }
-
-    return vizinho;
-}
-
 float calcula_distancia(vector<int> solucao, int ver, float **mat_adg) {
     float dist = 0.0;
     for (int i = 0; i < ver; i++) {
@@ -135,11 +83,98 @@ float calcula_distancia(vector<int> solucao, int ver, float **mat_adg) {
     return dist;
 }
 
-solution busca_local(solution sol_inicial, int ver, float **mat,
-                     int vizinhaca) {
+vector<int> gera_solucao_aleatoria(int ver, float **mat_adg) {
+    std::random_device rnd_device;
+    std::mt19937 mersenne_engine{rnd_device()};
+    std::uniform_int_distribution<> dist(0, ver - 1);
+
+    std::vector<int> cities(ver);
+    std::iota(std::begin(cities), std::end(cities), 0);
+    std::shuffle(std::begin(cities), std::end(cities), mersenne_engine);
+    return cities;
+}
+
+vector<int> gera_vizinho_swap_two(vector<int> solucao, int ver, int f_idx,
+                                  int s_idx) {
+    vector<int> vizinho = solucao;
+    std::swap(vizinho[f_idx], vizinho[s_idx]);
+    return vizinho;
+}
+
+vector<int> gera_vizinho_opt(vector<int> solucao, int ver, int i, int j) {
+    vector<int> vizinho = solucao;
+    std::reverse(vizinho.begin() + i, vizinho.begin() + j);
+    return vizinho;
+}
+
+vector<int> gera_vizinho_insert(vector<int> solucao, int ver, int i, int j) {
+    vector<int> vizinho = solucao;
+    int city = vizinho[i];
+    vizinho.erase(vizinho.begin() + i);
+    vizinho.insert(vizinho.begin() + j, city);
+    return vizinho;
+}
+
+solution busca_local_swap(solution sol_inicial, int ver, float **mat) {
     solution sol = sol_inicial;
-    int iter_sem_melhora = 0;
-    while (iter_sem_melhora < 2) {
+    bool improv = true;
+    while (improv) {
+        solution vizinho = sol;
+        for (int j = 0; j < ver; j++) {
+            for (int k = j + 1; k < ver; k++) {
+                if (k == j) {
+                    continue;
+                }
+
+                vector<int> v = gera_vizinho_swap_two(sol.v, ver, j, k);
+                float dist_v = calcula_distancia(v, ver, mat);
+
+                if (dist_v < vizinho.distancia) {
+                    vizinho.v = v;
+                    vizinho.distancia = dist_v;
+                }
+            }
+        }
+        if (vizinho.distancia < sol.distancia) {
+            sol = vizinho;
+        } else {
+            improv = false;
+        }
+    }
+
+    return sol;
+}
+
+solution busca_local_opt(solution sol_inicial, int ver, float **mat) {
+    solution sol = sol_inicial;
+    bool improv = true;
+    while (improv) {
+        solution vizinho = sol;
+        for (int j = 1; j < ver - 1; j++) {
+            for (int k = j + 1; k < ver; k++) {
+                vector<int> v = gera_vizinho_opt(sol.v, ver, j, k);
+                float dist_v = calcula_distancia(v, ver, mat);
+
+                if (dist_v < vizinho.distancia) {
+                    vizinho.v = v;
+                    vizinho.distancia = dist_v;
+                }
+            }
+        }
+        if (vizinho.distancia < sol.distancia) {
+            sol = vizinho;
+        } else {
+            improv = false;
+        }
+    }
+
+    return sol;
+}
+
+solution busca_local_insert(solution sol_inicial, int ver, float **mat) {
+    solution sol = sol_inicial;
+    bool improv = true;
+    while (improv) {
         solution vizinho = sol;
         for (int j = 0; j < ver; j++) {
             for (int k = 0; k < ver; k++) {
@@ -147,64 +182,78 @@ solution busca_local(solution sol_inicial, int ver, float **mat,
                     continue;
                 }
 
-                vector<int> v;
-                switch (vizinhaca) {
-                    case 0: {
-                        v = gera_vizinho_switch_two(sol.v, ver, j, k);
-                        break;
-                    }
-                    case 1: {
-                        v = gera_vizinho_shift_two(sol.v, ver, j, k);
-                        break;
-                    }
-                    case 2: {
-                        v = gera_vizinho_link_two(sol.v, ver, j, k);
-                        break;
-                    }
-                }
+                vector<int> v = gera_vizinho_insert(sol.v, ver, j, k);
                 float dist_v = calcula_distancia(v, ver, mat);
 
                 if (dist_v < vizinho.distancia) {
                     vizinho.v = v;
                     vizinho.distancia = dist_v;
-                    iter_sem_melhora = 0;
                 }
             }
         }
-        sol = vizinho;
-        iter_sem_melhora++;
+        if (vizinho.distancia < sol.distancia) {
+            sol = vizinho;
+        } else {
+            improv = false;
+        }
     }
 
     return sol;
 }
 
-solution pertubation(solution sol, int ver, float **mat, int vizinhaca) {
-    int d = 25;
+solution busca_local(solution sol_inicial, int ver, float **mat,
+                     int vizinhaca) {
+    solution sol;
+    switch (vizinhaca) {
+        case 0: {
+            sol = busca_local_swap(sol_inicial, ver, mat);
+            break;
+        }
+        case 1: {
+            sol = busca_local_opt(sol_inicial, ver, mat);
+            break;
+        }
+        case 2: {
+            sol = busca_local_insert(sol_inicial, ver, mat);
+            break;
+        }
+    }
+
+    return sol;
+}
+
+solution perturbation(solution sol, int ver, float **mat, int vizinhaca) {
+    int d = 5;
     solution s;
     s.v = sol.v;
     s.distancia = sol.distancia;
     for (int i = 0; i < d; i++) {
-        int pos1 = get_random_from_interval(0, ver - 1);
-        int pos2 = get_random_from_interval(0, ver - 1);
-        while (pos1 == pos2) {
-            pos2 = get_random_from_interval(0, ver - 1);
-        }
-        if (pos1 < pos2) {
-            int temp = pos2;
-            pos2 = pos1;
-            pos1 = temp;
-        }
         switch (vizinhaca) {
             case 0: {
-                s.v = gera_vizinho_switch_two(s.v, ver, pos1, pos2);
+                int pos1 = get_random_from_interval(0, ver - 1);
+                int pos2 = get_random_from_interval(0, ver - 1);
+                while (pos1 == pos2) {
+                    pos2 = get_random_from_interval(0, ver - 1);
+                }
+                s.v = gera_vizinho_swap_two(s.v, ver, pos1, pos2);
                 break;
             }
             case 1: {
-                s.v = gera_vizinho_shift_two(s.v, ver, pos1, pos2);
+                int pos1 = get_random_from_interval(1, ver - 2);
+                int pos2 = get_random_from_interval(pos1, ver - 1);
+                while (pos1 == pos2) {
+                    pos2 = get_random_from_interval(pos1, ver - 1);
+                }
+                s.v = gera_vizinho_opt(s.v, ver, pos1, pos2);
                 break;
             }
             case 2: {
-                s.v = gera_vizinho_link_two(s.v, ver, pos1, pos2);
+                int pos1 = get_random_from_interval(0, ver - 1);
+                int pos2 = get_random_from_interval(0, ver - 1);
+                while (pos1 == pos2) {
+                    pos2 = get_random_from_interval(0, ver - 1);
+                }
+                s.v = gera_vizinho_insert(s.v, ver, pos1, pos2);
                 break;
             }
         }
@@ -247,7 +296,7 @@ int main(int argc, char **argv) {
         sol_iter.distancia = sol.distancia;
         sol_iter.v = sol.v;
         while (vizinhaca < num_vizinhacas) {
-            solution s = pertubation(sol_iter, ver, mat, vizinhaca);
+            solution s = perturbation(sol_iter, ver, mat, vizinhaca);
             s = busca_local(s, ver, mat, vizinhaca);
             if (s.distancia < sol_iter.distancia) {
                 sol_iter.distancia = s.distancia;
