@@ -223,7 +223,7 @@ solution busca_local(solution sol_inicial, int ver, float **mat,
 }
 
 solution perturbation(solution sol, int ver, float **mat, int vizinhaca) {
-    int d = 5;
+    int d = 2;
     solution s;
     s.v = sol.v;
     s.distancia = sol.distancia;
@@ -264,13 +264,13 @@ solution perturbation(solution sol, int ver, float **mat, int vizinhaca) {
 }
 
 int main(int argc, char **argv) {
-    if (argc != 2) {
-        printf("Erro na passagem de parametros\n");
-        return -1;
-    }
-
     int ver;
     float **mat;
+    solution sol;
+    int num_vizinhacas = 3;
+    int vizinhaca = 0;
+    int iter = 0;
+    int max_iter = stoi(argv[2]);
 
     read_graph(argv, &ver, &mat);
 
@@ -280,24 +280,22 @@ int main(int argc, char **argv) {
 
     vector<int> solucao = gera_solucao_aleatoria(ver, mat);
     float dist = calcula_distancia(solucao, ver, mat);
-    solution sol;
     sol.distancia = dist;
     sol.v = solucao;
 
     printf("Distancia = %f\n", sol.distancia);
 
-    int num_vizinhacas = 3;
-    int vizinhaca = 0;
-    int iter = 0;
-    int max_iter = 5000;
-
     while (iter < max_iter) {
         solution sol_iter;
         sol_iter.distancia = sol.distancia;
         sol_iter.v = sol.v;
+
+        vizinhaca = 0;
+
         while (vizinhaca < num_vizinhacas) {
             solution s = perturbation(sol_iter, ver, mat, vizinhaca);
             s = busca_local(s, ver, mat, vizinhaca);
+
             if (s.distancia < sol_iter.distancia) {
                 sol_iter.distancia = s.distancia;
                 sol_iter.v = s.v;
@@ -307,7 +305,6 @@ int main(int argc, char **argv) {
                 vizinhaca++;
             }
         }
-
         if (sol_iter.distancia < sol.distancia) {
             sol.distancia = sol_iter.distancia;
             sol.v = sol_iter.v;

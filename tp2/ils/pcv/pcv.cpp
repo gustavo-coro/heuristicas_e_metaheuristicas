@@ -148,13 +148,12 @@ solution perturbation(solution sol, int d, int ver, float **mat) {
 }
 
 int main(int argc, char **argv) {
-    if (argc != 2) {
-        printf("Erro na passagem de parametros\n");
-        return -1;
-    }
-
     int ver;
     float **mat;
+    solution sol;
+    int max_iter = stoi(argv[2]);
+    int d = stoi(argv[3]);
+    int iter = 0;
 
     read_graph(argv, &ver, &mat);
 
@@ -165,27 +164,18 @@ int main(int argc, char **argv) {
     vector<int> solucao = gera_solucao_aleatoria(ver, mat);
 
     float dist = calcula_distancia(solucao, ver, mat);
-    solution sol;
     sol.distancia = dist;
     sol.v = solucao;
 
     printf("Distancia = %f\n", sol.distancia);
-    printf("Solucao = ");
-    for (int i = 0; i < ver; i++) {
-        printf("[%d] ", sol.v[i]);
-    }
-    printf("\n");
 
     sol = busca_local(sol, ver, mat);
-
-    int max_iter = 25;
-    int iter = 0;
-    int d = 1;
 
     while (iter < max_iter) {
         iter++;
         solution s = perturbation(sol, d, ver, mat);
         s = busca_local(s, ver, mat);
+
         if (s.distancia < sol.distancia) {
             sol.v = s.v;
             sol.distancia = s.distancia;

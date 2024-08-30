@@ -215,7 +215,7 @@ solution local_search(int n_items, item* items, int w_max, solution sol,
 
 solution perturbation(int n_items, item* items, solution sol, int w_max,
                       int penalty, int neighborhood) {
-    int d = 3;
+    int d = 2;
     solution s;
     s.items = sol.items;
     s.value = sol.value;
@@ -262,7 +262,7 @@ int main(int argc, char** argv) {
     int num_vizinhacas = 3;
     int vizinhaca = 0;
     int iter = 0;
-    int max_iter = 5000;
+    int max_iter = stoi(argv[2]);
 
     t = clock();
 
@@ -274,10 +274,14 @@ int main(int argc, char** argv) {
         sol_iter.items = sol.items;
         sol_iter.value = sol.value;
         sol_iter.weight = sol.weight;
+
+        vizinhaca = 0;
+
         while (vizinhaca < num_vizinhacas) {
             solution s = perturbation(n_items, items, sol_iter, wmax, penalty,
                                       vizinhaca);
             s = local_search(n_items, items, wmax, s, penalty, vizinhaca);
+
             if (s.value > sol_iter.value) {
                 sol_iter.items = s.items;
                 sol_iter.value = s.value;

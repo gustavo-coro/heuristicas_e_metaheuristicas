@@ -164,8 +164,7 @@ solution random_greedy_solution(int n_items, item* items, int w_max,
                 return lhs.weight > rhs.weight;
             });
         float limit = min_weight->weight +
-                      alpha * (max_weight->weight -
-                               min_weight->weight);
+                      alpha * (max_weight->weight - min_weight->weight);
 
         std::vector<int> items_selected = get_items_by_limit(items, lrc, limit);
 
@@ -200,8 +199,8 @@ solution random_greedy_solution(int n_items, item* items, int w_max,
 
 int main(int argc, char** argv) {
     int n_items, wmax, penalty;
-    float alpha = 0.08;
-    int max_iter = 100;
+    float alpha = stof(argv[2]);
+    int max_iter = stoi(argv[3]);
 
     item* items = read_knapsack(argv, &n_items, &wmax, &penalty);
 
@@ -216,6 +215,7 @@ int main(int argc, char** argv) {
         solution s =
             random_greedy_solution(n_items, items, wmax, alpha, penalty);
         s = local_search(n_items, items, wmax, s, penalty);
+
         if (s.value > best.value) {
             best.value = s.value;
             best.items = s.items;
@@ -223,10 +223,9 @@ int main(int argc, char** argv) {
         }
     }
 
-    printf("Valor final = %d\n", best.value);
-
     t = clock() - t;
 
+    printf("Valor final = %d\n", best.value);
     printf("Tempo Execucao:  %f seconds.\n", ((float)t) / CLOCKS_PER_SEC);
 
     free(items);

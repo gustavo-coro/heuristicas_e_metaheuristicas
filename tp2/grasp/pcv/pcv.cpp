@@ -165,7 +165,6 @@ solution random_greedy_solution(int num_cities, float **distance_matrix,
     // create LRC
     std::vector<int> lrc(num_cities);
     iota(lrc.begin(), lrc.end(), 0);
-    ;
 
     auto it = find(lrc.begin(), lrc.end(), start_city);
 
@@ -215,13 +214,11 @@ solution random_greedy_solution(int num_cities, float **distance_matrix,
 }
 
 int main(int argc, char **argv) {
-    if (argc != 2) {
-        printf("Erro na passagem de parametros\n");
-        return -1;
-    }
-
     int ver;
     float **mat;
+    solution best;
+    float alfa = stof(argv[2]);
+    int max_iter = stoi(argv[3]);
 
     read_graph(argv, &ver, &mat);
 
@@ -232,25 +229,15 @@ int main(int argc, char **argv) {
     vector<int> solucao = gera_solucao_aleatoria(ver, mat);
 
     float dist = calcula_distancia(solucao, ver, mat);
-    solution sol;
-    sol.distancia = dist;
-    sol.v = solucao;
+    best.distancia = dist;
+    best.v = solucao;
 
-    printf("Distancia = %f\n", sol.distancia);
-    printf("Solucao = ");
-    for (int i = 0; i < ver; i++) {
-        printf("[%d] ", sol.v[i]);
-    }
-    printf("\n");
-
-    solution best = sol;
-
-    float alfa = 0.05;
-    int max_iter = 65;
+    printf("Distancia = %f\n", best.distancia);
 
     for (int i = 0; i < max_iter; i++) {
         solution s = random_greedy_solution(ver, mat, alfa);
         s = busca_local(s, ver, mat);
+
         if (s.distancia < best.distancia) {
             best.distancia = s.distancia;
             best.v = s.v;

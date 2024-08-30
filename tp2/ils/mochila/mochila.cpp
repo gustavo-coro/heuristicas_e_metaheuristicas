@@ -135,6 +135,9 @@ solution perturbation(int n_items, item* items, solution sol, int d, int w_max,
 
 int main(int argc, char** argv) {
     int n_items, wmax, penalty;
+    int max_iter = stoi(argv[2]);
+    int d = stoi(argv[3]);
+    int iter = 0;
 
     item* items = read_knapsack(argv, &n_items, &wmax, &penalty);
 
@@ -146,14 +149,11 @@ int main(int argc, char** argv) {
     solution sol = calculate_profit(s, items, penalty, wmax);
     sol = local_search(n_items, items, wmax, sol, penalty);
 
-    int max_iter = 50;
-    int iter = 0;
-    int d = 1;
-
     while (iter < max_iter) {
         iter++;
         solution s = perturbation(n_items, items, sol, d, wmax, penalty);
         s = local_search(n_items, items, wmax, s, penalty);
+
         if (!is_solution_valid(s.items, items, wmax)) {
             continue;
         }
@@ -168,10 +168,9 @@ int main(int argc, char** argv) {
         }
     }
 
-    printf("Valor final = %d\n", sol.value);
-
     t = clock() - t;
 
+    printf("Valor final = %d\n", sol.value);
     printf("Tempo Execucao:  %f seconds.\n", ((float)t) / CLOCKS_PER_SEC);
 
     free(items);
